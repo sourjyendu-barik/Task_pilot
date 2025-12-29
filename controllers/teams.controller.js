@@ -4,7 +4,7 @@ const Team = require("../models/model.team");
 const addTeam = async (req, res) => {
   try {
     const { name, description, members } = req.body;
-    if (!name || !description || members.length <= 3) {
+    if (!name || !description || members.length < 1) {
       return res
         .status(400)
         .json({ success: false, message: "Required fields are missing" });
@@ -55,7 +55,7 @@ const getTeam = async (req, res) => {
         message: "Invalid team ID",
       });
     }
-    const required_team = await Team.findById(id);
+    const required_team = await Team.findById(id).populate("members");
     if (!required_team) {
       return res.status(404).json({
         success: false,
@@ -78,7 +78,7 @@ const getTeam = async (req, res) => {
 
 const allteams = async (req, res) => {
   try {
-    const allteamsList = await Team.find();
+    const allteamsList = await Team.find().populate("members");
     return res.status(200).json({
       success: true,
       message: allteamsList.length ? "Team data found" : "No teams available",
