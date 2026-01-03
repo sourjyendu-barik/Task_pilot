@@ -12,5 +12,6 @@ app.use(cors());
 //roures registartion
 app.use("/api", require("./routes/user.routes"));
 app.use("/api", require("./routes/team.routes"));
-
+app.use("/api", require("./routes/project.routes"));
+app.use("/api", require("./routes/tag.routes"));
 module.exports = app;
