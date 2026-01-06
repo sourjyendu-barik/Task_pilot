@@ -38,6 +38,7 @@ const taskSchema = new mongoose.Schema({
     // Enum for task status
     default: "To Do",
   }, // Task status
+  dueDate: { type: Date, required: [true, "Due date is required."] },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
