@@ -7,7 +7,7 @@ const app = express();
 
 //middlewere setup
 app.use(express.json());
-app.use(cors());
+app.use(cors({ origin: "*", credentials: true }));
 
 //roures registartion
 app.use("/api", require("./routes/user.routes"));
