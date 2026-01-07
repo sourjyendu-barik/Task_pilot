@@ -1,4 +1,4 @@
-const Task = require("../models/model.tasks");
+const Task = require("../models/model.task");
 
 // GET /report/last-week : Fetch tasks completed in the last week. This can
 // be calculated by querying tasks where the status is Completed and
