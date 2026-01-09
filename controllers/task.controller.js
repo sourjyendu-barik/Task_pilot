@@ -3,39 +3,22 @@ const mongoose = require("mongoose");
 
 const createTask = async (req, res) => {
   try {
-    const {
-      name,
-      project,
-      team,
-      owners,
-      tags,
-      timeToComplete,
-      status,
-      dueDate,
-    } = req.body;
-
+    let { name, project, team, owners, timeToComplete, dueDate } = req.body;
+    timeToComplete = Number(timeToComplete);
+    dueDate = new Date(dueDate);
     if (
       !name ||
       !project ||
       !team ||
-      !owners ||
       !Array.isArray(owners) ||
       owners.length === 0 ||
-      !timeToComplete ||
-      typeof timeToComplete !== "number" ||
+      Number.isNaN(timeToComplete) ||
       timeToComplete < 1 ||
-      !dueDate
+      isNaN(dueDate.getTime())
     ) {
       return res
         .status(400)
         .json({ success: false, message: "Missing field is there" });
-    }
-    const exist = await Task.findOne({ name });
-    if (exist) {
-      return res.status(409).json({
-        success: false,
-        message: "This task  already exists",
-      });
     }
     if (
       !mongoose.Types.ObjectId.isValid(project) ||
@@ -47,14 +30,20 @@ const createTask = async (req, res) => {
         message: "Invalid objectid in Team,Owners,or Project",
       });
     }
+    const exist = await Task.findOne({ name });
+    if (exist) {
+      return res.status(409).json({
+        success: false,
+        message: "This task  already exists",
+      });
+    }
+
     const newTask = new Task({
       name,
       project,
       team,
       owners,
-      tags,
       timeToComplete,
-      status,
       dueDate,
     });
     const savedTask = await newTask.save();
