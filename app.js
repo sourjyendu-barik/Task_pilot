@@ -1,6 +1,7 @@
 //impporting libraries
 const express = require("express");
 const cors = require("cors");
+const auth = require("./middlewire/auth");
 
 //creating express app instance
 const app = express();
@@ -10,6 +11,11 @@ app.use(express.json());
 app.use(cors({ origin: "*", credentials: true }));
 
 //roures registartion
+
+//un protected routes
+app.use("/api", require("./routes/auth.routes"));
+//protected routes
+app.use(auth);
 app.use("/api", require("./routes/user.routes"));
 app.use("/api", require("./routes/team.routes"));
 app.use("/api", require("./routes/project.routes"));
