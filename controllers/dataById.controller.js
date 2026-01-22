@@ -113,25 +113,34 @@ const getsTasksByUsers = async (req, res) => {
         },
       },
       { $unwind: "$teamDetails" },
-      { $match: { "teamDetails.members": new mongoose.Types.ObjectId(id) } },
+
+      {
+        $match: {
+          "teamDetails.members": new mongoose.Types.ObjectId(id),
+        },
+      },
+
       {
         $lookup: {
           from: "users",
           localField: "owners",
           foreignField: "_id",
-          as: "ownerDetails",
+          as: "owners",
         },
       },
+
       {
         $group: {
-          _id: "$_id", // task _id
-          name: { $first: "$name" }, // keep task name
-          status: { $first: "$status" }, // task status
-          team: { $first: "$teamDetails" }, // keep team info
-          owners: { $push: "$ownerDetails" }, // collect all owner objects
+          _id: "$_id",
+          name: { $first: "$name" },
+          status: { $first: "$status" },
+          dueDate: { $first: "$dueDate" },
+          team: { $first: "$teamDetails" },
+          owners: { $first: "$owners" },
         },
       },
     ]);
+
     res.status(200).json({
       success: true,
       totalTasks: tasksOfUser.length,
