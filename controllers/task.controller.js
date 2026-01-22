@@ -70,9 +70,79 @@ const createTask = async (req, res) => {
     });
   }
 };
+// const readTasks = async (req, res) => {
+//   try {
+//     const { project, team, owner, tags, status } = req.query;
+//     const filter = {};
+//     const validateObjectId = (id, fieldName) => {
+//       if (!!id && !mongoose.Types.ObjectId.isValid(id)) {
+//         return res.status(400).json({
+//           success: false,
+//           message: `Invalid ${fieldName}`,
+//         });
+//       }
+//     };
+//     const createMongooseId = (id) => {
+//       return new mongoose.Types.ObjectId(id);
+//     };
+//     if (!!project) {
+//       validateObjectId(project, "project");
+//       filter.project = createMongooseId(project);
+//     }
+//     const allTasks = await Task.find(filter).populate("project team owners");
+//     return res.status(200).json({
+//       success: true,
+//       data: allTasks,
+//       message: allTasks.length
+//         ? "Tasks data fetched successfully"
+//         : "No task data present",
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Server error",
+//     });
+//   }
+// };
 const readTasks = async (req, res) => {
   try {
-    const allTasks = await Task.find().populate("project team owners");
+    const { project, team, owner, tags, status } = req.query;
+    const filter = {};
+
+    const createMongooseId = (id) => new mongoose.Types.ObjectId(id);
+
+    const validateObjectId = (id, fieldName) => {
+      if (!!id && !mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid ${fieldName} ID`,
+        });
+      }
+      return true;
+    };
+
+    // Validate + filter for each field
+    if (!!project) {
+      if (!validateObjectId(project, "project")) return;
+      filter.project = createMongooseId(project);
+    }
+
+    if (!!team) {
+      if (!validateObjectId(team, "team")) return;
+      filter.team = createMongooseId(team);
+    }
+
+    if (!!owner) {
+      if (!validateObjectId(owner, "owner")) return;
+      filter.owners = createMongooseId(owner);
+    }
+
+    if (!!status) filter.status = status;
+    if (!!tags) filter.tags = tags;
+
+    const allTasks = await Task.find(filter).populate("project team owners");
+
     return res.status(200).json({
       success: true,
       data: allTasks,
@@ -88,6 +158,7 @@ const readTasks = async (req, res) => {
     });
   }
 };
+
 const updateTaskById = async (req, res) => {
   try {
     const updatedTask = req.body;
@@ -155,7 +226,7 @@ const getTasksById = async (req, res) => {
         .json({ success: false, message: "Task id is invalid." });
     }
     const taskDetail = await Task.findById(taskId).populate(
-      "project team owners"
+      "project team owners",
     );
     if (!taskDetail) {
       return res.status(404).json({

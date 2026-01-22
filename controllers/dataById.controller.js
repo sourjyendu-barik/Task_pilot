@@ -15,7 +15,19 @@ const getUserProjects = async (req, res) => {
     const userObjectId = new mongoose.Types.ObjectId(id);
 
     const userProjects = await Task.aggregate([
-      // 1️⃣ Join project to get project info
+      // 1. Filter user's tasks
+      {
+        $lookup: {
+          from: "teams",
+          localField: "team",
+          foreignField: "_id",
+          as: "teamDetails",
+        },
+      },
+      { $unwind: "$teamDetails" },
+      { $match: { "teamDetails.members": userObjectId } },
+
+      // 2. Get project details
       {
         $lookup: {
           from: "projects",
@@ -26,7 +38,7 @@ const getUserProjects = async (req, res) => {
       },
       { $unwind: "$projectDetails" },
 
-      // 2️⃣ Group by project to count all tasks
+      // 3. Group + count ALL user's tasks
       {
         $group: {
           _id: "$projectDetails._id",
@@ -38,55 +50,30 @@ const getUserProjects = async (req, res) => {
           completedTasks: {
             $sum: { $cond: [{ $eq: ["$status", "Completed"] }, 1, 0] },
           },
-          inProgressTasks: {
-            $sum: { $cond: [{ $eq: ["$status", "In Progress"] }, 1, 0] },
-          },
-          toDoTasks: {
-            $sum: { $cond: [{ $eq: ["$status", "To Do"] }, 1, 0] },
-          },
-          blockedTasks: {
-            $sum: { $cond: [{ $eq: ["$status", "Blocked"] }, 1, 0] },
+        },
+      },
+
+      // 4. Simple logic: ALL completed → "Completed", else "In Progress"
+      {
+        $addFields: {
+          projectStatus: {
+            $cond: {
+              if: { $eq: ["$completedTasks", "$totalTasks"] },
+              then: "Completed",
+              else: "In Progress",
+            },
           },
         },
       },
 
-      // 3️⃣ Join tasks again to check teams for user membership
+      // 5. Clean output
       {
-        $lookup: {
-          from: "tasks",
-          localField: "_id",
-          foreignField: "project",
-          as: "tasks",
-        },
-      },
-      { $unwind: "$tasks" },
-
-      // 4️⃣ Join teams
-      {
-        $lookup: {
-          from: "teams",
-          localField: "tasks.team",
-          foreignField: "_id",
-          as: "teamDetails",
-        },
-      },
-      { $unwind: "$teamDetails" },
-
-      // 5️⃣ Filter only tasks where the user is in the team
-      { $match: { "teamDetails.members": userObjectId } },
-
-      // 6️⃣ Re-group to remove duplicate projects after user filtering
-      {
-        $group: {
-          _id: "$_id",
-          name: { $first: "$name" },
-          description: { $first: "$description" },
-          createdAt: { $first: "$createdAt" },
-          totalTasks: { $first: "$totalTasks" },
-          completedTasks: { $first: "$completedTasks" },
-          inProgressTasks: { $first: "$inProgressTasks" },
-          toDoTasks: { $first: "$toDoTasks" },
-          blockedTasks: { $first: "$blockedTasks" },
+        $project: {
+          name: 1,
+          description: 1,
+          createdAt: 1,
+          projectStatus: 1,
+          _id: 1,
         },
       },
 
@@ -106,6 +93,7 @@ const getUserProjects = async (req, res) => {
     });
   }
 };
+
 const getsTasksByUsers = async (req, res) => {
   try {
     const { id } = req.params;
@@ -147,7 +135,6 @@ const getsTasksByUsers = async (req, res) => {
     res.status(200).json({
       success: true,
       totalTasks: tasksOfUser.length,
-
       data: tasksOfUser,
     });
   } catch (error) {
@@ -158,4 +145,5 @@ const getsTasksByUsers = async (req, res) => {
     });
   }
 };
+
 module.exports = { getUserProjects, getsTasksByUsers };

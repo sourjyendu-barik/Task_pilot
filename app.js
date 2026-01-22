@@ -14,6 +14,7 @@ app.use(cors({ origin: "*", credentials: true }));
 
 //un protected routes
 app.use("/api", require("./routes/auth.routes"));
+app.use("/api", require("./routes/data.routes"));
 
 //protected routes
 app.use(auth);
@@ -23,6 +24,5 @@ app.use("/api", require("./routes/project.routes"));
 app.use("/api", require("./routes/tag.routes"));
 app.use("/api", require("./routes/task.routes"));
 app.use("/api", require("./routes/report.routes"));
-app.use("/api", require("./routes/data.routes"));
 
 module.exports = app;
