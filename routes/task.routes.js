@@ -12,6 +12,6 @@ const {
 router.post("/task", createTask);
 router.get("/task", readTasks);
 router.get("/task/:id", getTasksById);
-router.post("/taskUpdate/:id", updateTaskById);
+router.post("/task/:id", updateTaskById);
 router.delete("/task/:id", deleteTaskById);
 module.exports = router;

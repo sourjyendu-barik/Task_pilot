@@ -1,4 +1,5 @@
 const Project = require("../models/model.project");
+const Task = require("../models/model.task");
 const mongoose = require("mongoose");
 const addProject = async (req, res) => {
   try {
@@ -70,13 +71,16 @@ const deleteProject = async (req, res) => {
         success: false,
       });
     }
-    const deletedProject = await Project.findByIdAndDelete(projectId);
+    const deletedProject = await Project.findById(projectId);
     if (!deletedProject) {
       return res.status(404).json({
         message: "The project is not found",
         success: false,
       });
     }
+    await Task.deleteMany({ project: projectId });
+
+    await Project.findByIdAndDelete(projectId);
     return res
       .status(200)
       .json({ message: "The project is deleted successfully", success: true });
@@ -114,5 +118,50 @@ const findprojectById = async (req, res) => {
       .json({ message: "Internal server error", success: false });
   }
 };
+const updateProjectById = async (req, res) => {
+  try {
+    const updatedProject = req.body;
+    const projectId = req.params.id;
 
-module.exports = { addProject, allProjects, deleteProject, findprojectById };
+    if (!mongoose.Types.ObjectId.isValid(projectId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Project id is invalid." });
+    }
+
+    const savedUpdatedProject = await Project.findByIdAndUpdate(
+      projectId,
+      updatedProject,
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    if (!savedUpdatedProject) {
+      return res.status(404).json({
+        success: false,
+        message: "Project data not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `${savedUpdatedProject.name} saved successfully`,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+module.exports = {
+  addProject,
+  allProjects,
+  deleteProject,
+  findprojectById,
+  updateProjectById,
+};

@@ -19,10 +19,9 @@ app.use("/api", require("./routes/auth.routes"));
 app.use(auth);
 app.use("/api", require("./routes/user.routes"));
 app.use("/api", require("./routes/team.routes"));
-app.use("/api", require("./routes/project.routes"));
 app.use("/api", require("./routes/tag.routes"));
-app.use("/api", require("./routes/task.routes"));
 app.use("/api", require("./routes/data.routes"));
 app.use("/api/dashboard", require("./routes/report.routes"));
-
+app.use("/api", require("./routes/task.routes"));
+app.use("/api", require("./routes/project.routes"));
 module.exports = app;
