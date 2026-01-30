@@ -60,7 +60,17 @@ const getUserProjects = async (req, res) => {
           },
         },
       },
-
+      {
+        $set: {
+          projectStatus: {
+            $cond: {
+              if: { $eq: ["$totalTasks", "$completedTasks"] },
+              then: "Completed",
+              else: "In Progress",
+            },
+          },
+        },
+      },
       { $sort: { createdAt: -1 } },
     ]);
 
