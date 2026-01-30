@@ -52,31 +52,6 @@ const getUserProjects = async (req, res) => {
           },
         },
       },
-
-      // 4. Simple logic: ALL completed → "Completed", else "In Progress"
-      {
-        $addFields: {
-          projectStatus: {
-            $cond: {
-              if: { $eq: ["$completedTasks", "$totalTasks"] },
-              then: "Completed",
-              else: "In Progress",
-            },
-          },
-        },
-      },
-
-      // 5. Clean output
-      {
-        $project: {
-          name: 1,
-          description: 1,
-          createdAt: 1,
-          projectStatus: 1,
-          _id: 1,
-        },
-      },
-
       { $sort: { name: 1 } },
     ]);
 

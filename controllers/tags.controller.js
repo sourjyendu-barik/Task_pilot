@@ -15,9 +15,12 @@ const addTag = async (req, res) => {
         .status(409)
         .json({ success: false, message: "This tag is already exists" });
     }
-    return res
-      .status(201)
-      .json({ success: true, message: "New tag created successfully" });
+    const newTag = new Tag({ name });
+    const savedTag = await newTag.save();
+    return res.status(201).json({
+      success: true,
+      message: `New tag created successfully: ${savedTag.name}`,
+    });
   } catch (error) {
     console.error(error);
     if (error.code === 11000) {
@@ -26,9 +29,7 @@ const addTag = async (req, res) => {
         .json({ success: false, message: "This tag is already exists" });
     }
     if (error.name === "ValidationError") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Name field is missing" });
+      return res.status(400).json({ success: false, message: error.message });
     }
     return res
       .status(500)
@@ -40,7 +41,8 @@ const alltags = async (req, res) => {
     const allTagList = await Tag.find();
     return res.status(200).json({
       success: true,
-      message: allTagList ? "Tags data found" : "No tags data available",
+      message:
+        allTagList.length > 0 ? "Tags data found" : "No tags data available",
       data: allTagList,
     });
   } catch (error) {
@@ -68,7 +70,7 @@ const deleteTagById = async (req, res) => {
       });
     }
     return res.status(200).json({
-      mesage: "The tag is deleted successfully",
+      message: "The tag is deleted successfully",
       success: true,
     });
   } catch (error) {
