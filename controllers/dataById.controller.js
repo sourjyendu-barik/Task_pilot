@@ -12,53 +12,61 @@ const getUserProjects = async (req, res) => {
       });
     }
 
-    const userObjectId = new mongoose.Types.ObjectId(id);
+    const userId = new mongoose.Types.ObjectId(id);
 
-    const userProjects = await Task.aggregate([
-      // 1. Filter user's tasks
+    const projects = await Task.aggregate([
+      // 1️⃣ Join team
       {
         $lookup: {
           from: "teams",
           localField: "team",
           foreignField: "_id",
-          as: "teamDetails",
+          as: "team",
         },
       },
-      { $unwind: "$teamDetails" },
-      { $match: { "teamDetails.members": userObjectId } },
+      { $unwind: "$team" },
 
-      // 2. Get project details
+      // 2️⃣ User must be team member
+      {
+        $match: {
+          "team.members": userId,
+        },
+      },
+
+      // 3️⃣ Join project
       {
         $lookup: {
           from: "projects",
           localField: "project",
           foreignField: "_id",
-          as: "projectDetails",
+          as: "project",
         },
       },
-      { $unwind: "$projectDetails" },
+      { $unwind: "$project" },
 
-      // 3. Group + count ALL user's tasks
+      // 4️⃣ GROUP BY PROJECT
       {
         $group: {
-          _id: "$projectDetails._id",
-          name: { $first: "$projectDetails.name" },
-          description: { $first: "$projectDetails.description" },
-          createdAt: { $first: "$projectDetails.createdAt" },
+          _id: "$project._id",
+          name: { $first: "$project.name" },
+          description: { $first: "$project.description" },
+          createdAt: { $first: "$project.createdAt" },
 
           totalTasks: { $sum: 1 },
           completedTasks: {
-            $sum: { $cond: [{ $eq: ["$status", "Completed"] }, 1, 0] },
+            $sum: {
+              $cond: [{ $eq: ["$status", "Completed"] }, 1, 0],
+            },
           },
         },
       },
-      { $sort: { name: 1 } },
+
+      { $sort: { createdAt: -1 } },
     ]);
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      message: `Found ${userProjects.length} projects`,
-      data: userProjects,
+      data: projects,
     });
   } catch (error) {
     console.error(error);
