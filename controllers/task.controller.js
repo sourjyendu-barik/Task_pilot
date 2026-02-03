@@ -1,4 +1,5 @@
 const Task = require("../models/model.task");
+const Tag = require("../models/model.tag");
 const mongoose = require("mongoose");
 
 const createTask = async (req, res) => {
@@ -161,12 +162,29 @@ const readTasks = async (req, res) => {
 
 const updateTaskById = async (req, res) => {
   try {
-    const updatedTask = req.body;
     const taskId = req.params.id;
     if (!mongoose.Types.ObjectId.isValid(taskId)) {
       return res
         .status(400)
         .json({ success: false, message: "Task id is invalid." });
+    }
+    const updatedTask = { ...req.body };
+    if (Array.isArray(updatedTask.tags)) {
+      const normalizedTags = [
+        ...new Set(updatedTask.tags.map((t) => t?.trim()).filter(Boolean)),
+      ];
+
+      // Ensure tags exist in Tag collection
+      if (normalizedTags.length > 0) {
+        await Tag.insertMany(
+          normalizedTags.map((name) => ({ name })),
+          { ordered: false }, // ignore duplicates
+        ).catch((err) => {
+          if (err.code !== 11000) throw err;
+        });
+      }
+
+      updatedTask.tags = normalizedTags;
     }
     const savedUpdatedTask = await Task.findByIdAndUpdate(taskId, updatedTask, {
       new: true,
